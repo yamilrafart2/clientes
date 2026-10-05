@@ -1,47 +1,102 @@
+// =============================================================================
+// 1. BLOQUE DE PLUGINS
+// Define las extensiones que le otorgan capacidades de compilación, empaquetado,
+// métricas de código y gestión de dependencias al motor de Gradle.
+// =============================================================================
 plugins {
-    id 'java'
-    id 'jacoco'
+    id 'java' // Habilita el soporte para compilar, testear y empaquetar código Java.
+
+    id 'jacoco' // Herramienta de medición de cobertura de código (Code Coverage) para tests.
+
+    // Plugin principal de Spring Boot: permite empaquetar un JAR ejecutable (fat JAR)
+    // y provee la tarea `./gradlew bootRun`.
     id 'org.springframework.boot' version '3.3.0'
+
+    // Gestiona automáticamente las versiones compatibles (BOM) de las dependencias 
+    // del ecosistema Spring sin necesidad de escribir versiones manualmente.
     id 'io.spring.dependency-management' version '1.1.5'
 }
 
-group = 'com.fube'
-version = '1.0-SNAPSHOT'
+// =============================================================================
+// 2. METADATOS DEL PROYECTO
+// Identificación del paquete base y versión del artefacto compilado.
+// =============================================================================
+group = 'com.fube' // Grupo del proyecto (Fundamentos de Desarrollo Backend).
+version = '1.0-SNAPSHOT' // Versión de desarrollo en iteración continua.
 
+// Configuración de compatibilidad con Java 21 (estándar LTS de la materia).
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
 }
 
+// Configuración de la herramienta JaCoCo para análisis de cobertura.
 jacoco {
     toolVersion = "0.8.12"
 }
 
+// =============================================================================
+// 3. REPOSITORIOS DE DEPENDENCIAS
+// Ubicación remota desde donde Gradle descarga los JARs declarados.
+// =============================================================================
 repositories {
-    mavenCentral()
+    mavenCentral() // Repositorio público oficial de la comunidad Java.
 }
 
+// =============================================================================
+// 4. BLOQUE DE DEPENDENCIAS
+// Librerías de infraestructura, persistencia, procesamiento batch, testing y utilidades.
+// =============================================================================
 dependencies {
+    // --- Capa Web y APIs REST (Unidad 1) ---
+    // Incluye Tomcat embebido, Spring MVC, Jackson (para serialización/deserialización JSON).
     implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // --- Capa de Persistencia y Base de Datos (Unidad 1) ---
+    // Incluye Hibernate, Spring Data JPA y gestión de transacciones O/R.
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // --- Procesamiento Batch a Gran Escala (Unidad 3) ---
+    // Motor para ejecución de Jobs, Steps, Readers, Processors y Writers.
     implementation 'org.springframework.boot:spring-boot-starter-batch'
+
+    // --- Documentación de la API REST (Unidad 1) ---
+    // Genera automáticamente la interfaz gráfica Swagger UI para probar endpoints en /swagger-ui.html.
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+
+    // --- Migraciones y Control de Versiones de Base de Datos ---
+    // Flyway ejecuta scripts SQL (.sql) estructurados para crear/modificar tablas.
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
 
+    // --- Reducción de Código Boilerplate con Lombok (Unidad 1) ---
+    // 'compileOnly': Se usa durante la compilación para procesar anotaciones (@Data, @Getter, etc.).
+    // 'annotationProcessor': Genera los getters, setters y constructores en bytecode de forma transparente.
     compileOnly 'org.projectlombok:lombok:1.18.38'
     annotationProcessor 'org.projectlombok:lombok:1.18.38'
 
+    // --- Driver de Conexión a Base de Datos (Unidad 1) ---
+    // Solo necesario en tiempo de ejecución para conectarse al motor PostgreSQL en Docker.
     runtimeOnly 'org.postgresql:postgresql'
 
+    // --- Testing Backend y Simulación de Entornos (Unidad 4) ---
+    // Incluye JUnit 5, Mockito, AssertJ y Spring Test context.
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // MockServer: Permite simular APIs HTTP externas durante las pruebas unitarias y de integración.
     testImplementation 'org.mock-server:mockserver-netty:5.15.0'
 }
 
+// =============================================================================
+// 5. TAREAS Y AUTOMATIZACIÓN DE PRUEBAS Y COBERTURA (Unidad 4)
+// =============================================================================
+
+// Configura la ejecución de tests unitarios e integrales con JUnit 5.
 test {
     useJUnitPlatform()
-    finalizedBy jacocoTestReport
+    finalizedBy jacocoTestReport // Al terminar los tests, genera automáticamente el reporte de cobertura.
 }
 
+// Genera el reporte visual en HTML y XML sobre el porcentaje de código testeado.
 jacocoTestReport {
     dependsOn test
     reports {
@@ -50,11 +105,12 @@ jacocoTestReport {
     }
 }
 
+// Regla de calidad de software: Falla el build si el código no cubre el umbral mínimo.
 jacocoTestCoverageVerification {
     dependsOn jacocoTestReport
     violationRules {
         rule {
-            // Cobertura actual ~20%. Ir subiendo este mínimo a medida que se agreguen tests.
+            // Umbral de cobertura configurado actualmente al 15% (mínimo exigido en esta etapa del repo).
             limit {
                 minimum = 0.15
             }
@@ -62,6 +118,7 @@ jacocoTestCoverageVerification {
     }
 }
 
+// Enlaza la verificación de cobertura a la tarea estándar `./gradlew check`.
 check {
     dependsOn jacocoTestCoverageVerification
 }

@@ -1,3 +1,8 @@
+-- =============================================================================
+-- MIGRACIÓN FLYWAY V2: Inserción de Datos Iniciales (Seed/Data Populator)
+-- Muestra el patrón DML para pruebas de desarrollo local y Spring Batch [Unidad 3]
+-- =============================================================================
+
 INSERT INTO clientes (id, nombre, apellido, email, telefono, direccion) VALUES
 (1,  'Juan',         'García',     'juan.garcia1@gmail.com',              NULL,                   'Av. Corrientes 1234'),
 (2,  'María',        'Martínez',   'maria.martinez2@hotmail.com',         '+54 11 4521-3456',     NULL),
@@ -92,4 +97,11 @@ INSERT INTO clientes (id, nombre, apellido, email, telefono, direccion) VALUES
 (91, 'Lisandro',     'Palma',      'lisandro.palma91@yahoo.com',          NULL,                   'Av. Warnes 789'),
 (92, 'Marta',        'Bernal',     'marta.bernal92@outlook.com',          '+54 11 4934-5678',     NULL);
 
+-- =============================================================================
+-- REAJUSTE DE SECUENCIA POSTGRESQL (Punto Crítico)
+-- Al insertar IDs de forma explícita (del 1 al 92) en una columna BIGSERIAL,
+-- la secuencia interna de PostgreSQL ('clientes_id_seq') NO se actualiza sola.
+-- setval() ajusta el puntero al valor 92 para que el próximo @PostMapping (save)
+-- genere el ID 93 y no colisione con una excepción de Clave Duplicada.
+-- =============================================================================
 SELECT setval('clientes_id_seq', 92);
