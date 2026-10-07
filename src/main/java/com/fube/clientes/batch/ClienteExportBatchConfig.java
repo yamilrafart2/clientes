@@ -80,7 +80,8 @@ public class ClienteExportBatchConfig {
     }
 
     /**
-     * Listener: Captura métricas al finalizar el Job para loguear la cantidad total exportada.
+     * Listener: Captura metricas al finalizar el Job para loguear la cantidad total exportada
+     * y los descartados por falta de direccion (Requerimiento Extra Ejercicio 2).
      */
     @Bean
     public JobExecutionListener exportClienteJobListener() {
@@ -88,11 +89,15 @@ public class ClienteExportBatchConfig {
             @Override
             public void afterJob(JobExecution jobExecution) {
                 jobExecution.getStepExecutions().forEach(stepExecution -> {
-                    long writeCount = stepExecution.getWriteCount(); // Total escrituras en CSV
+                    long readCount = stepExecution.getReadCount();     // Leidos de PostgreSQL
+                    long writeCount = stepExecution.getWriteCount();   // Exportados al CSV
+                    long filterCount = stepExecution.getFilterCount(); // Excluidos por no tener direccion
 
                     log.info("=================================================");
-                    log.info("RESUMEN DE EJECUCIÓN DEL JOB DE EXPORTACIÓN CSV");
-                    log.info("Total clientes exportados al archivo CSV: {}", writeCount);
+                    log.info("RESUMEN DE EJECUCIÓN DEL JOB DE EXPORTACIÓN CSV (EXTRA)");
+                    log.info("Total clientes leídos de la BD: {}", readCount);
+                    log.info("Total clientes exportados al CSV: {}", writeCount);
+                    log.info("Total clientes excluidos por falta de dirección: {}", filterCount);
                     log.info("=================================================");
                 });
             }
