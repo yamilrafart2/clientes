@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 
 // Registra esta clase como un Bean gestionado por Spring.
-@Component
+//@Component
 
 // CONTROL DE EJECUCIÓN VÍA PROPIEDADES (Punto Clave):
 // Este Bean SOLO se instanciará y ejecutará si en el 'application.properties'
