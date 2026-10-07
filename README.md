@@ -1,78 +1,86 @@
-# Clientes
+# Clientes - Spring Boot & Spring Batch (UTN FRFS)
 
-CRUD de clientes desarrollado con Spring Boot.
+Proyecto backend desarrollado para la asignatura **Fundamentos de Desarrollo Backend**.
+Incluye una API REST para la gestión de clientes y Jobs de procesamiento en lotes con Spring Batch.
 
-## Tecnologías
+---
 
-- Java 17
-- Spring Boot 3.3
-- Spring Data JPA
-- Spring Batch
-- Flyway
-- Lombok
-- PostgreSQL
-- Springdoc OpenAPI (Swagger)
+## 🛠️ Tecnologías Utilizadas
 
-## Estructura del proyecto
+- **Java 21**
+- **Spring Boot 3.3.0**
+- **Spring Data JPA** (Hibernate 6)
+- **Spring Batch 5**
+- **Flyway** (Migraciones DDL/DML)
+- **PostgreSQL 16** (Docker Container)
+- **Project Lombok**
+- **Springdoc OpenAPI** (Swagger UI)
+- **Gradle 8+**
 
-```
+---
+
+## 📁 Estructura del Proyecto
+
+```text
 com.fube.clientes
-├── batch            # Job, Step, Reader, Processor y Writer de Spring Batch
-├── controladores    # Capa REST
-├── dto              # Objetos de transferencia de datos
-├── mapper           # Conversión entre entidad y DTO
-├── modelos          # Entidades JPA
-├── repositorio      # Acceso a datos (Spring Data JPA)
-└── servicios        # Lógica de negocio
+├── batch            # Configuraciones, Processors, Readers, Writers y Runners de Spring Batch
+├── controladores    # Capa de exposición REST (Endpoints HTTP)
+├── dto              # Objetos de Transferencia de Datos (CSV Import, Export, REST)
+├── mapper           # Conversión entre Entidades JPA y DTOs
+├── modelos          # Entidades JPA de dominio (@Entity Cliente)
+├── repositorio      # Interfaces de acceso a datos (JpaRepository)
+└── servicios        # Lógica de negocio de la aplicación
 ```
 
-## Endpoints
+---
 
-| Método | URL | Descripción |
-|--------|-----|-------------|
-| `GET` | `/api/clientes` | Listar todos los clientes |
-| `GET` | `/api/clientes/{id}` | Obtener cliente por ID |
-| `POST` | `/api/clientes` | Crear cliente |
-| `PUT` | `/api/clientes/{id}` | Actualizar cliente |
-| `DELETE` | `/api/clientes/{id}` | Eliminar cliente |
+## 🚀 Endpoints de la API REST
 
-## Migraciones
+| Método   | Endpoint                | Descripción                                  | Estado HTTP                |
+|:---------|:------------------------|:---------------------------------------------|:---------------------------|
+| `GET`    | `/api/v1/clientes`      | Obtiene el listado completo de clientes      | `200 OK`                   |
+| `GET`    | `/api/v1/clientes/{id}` | Busca un cliente por su identificador único  | `200 OK` / `404 Not Found` |
+| `POST`   | `/api/v1/clientes`      | Crea un nuevo cliente en el sistema          | `201 Created`              |
+| `PUT`    | `/api/v1/clientes/{id}` | Actualiza completamente un cliente existente | `200 OK` / `404 Not Found` |
+| `DELETE` | `/api/v1/clientes/{id}` | Elimina físicamente un cliente por ID        | `204 No Content`           |
 
-Las migraciones se gestionan con Flyway y se ejecutan automáticamente al iniciar la aplicación.
+---
 
-| Versión | Descripción |
-|---------|-------------|
-| `V1` | Creación de la tabla `clientes` |
-| `V2` | Seed de 92 clientes |
+## 🗄️ Migraciones de Base de Datos (Flyway)
 
-## Batch job
+Las migraciones son gestionadas automáticamente por **Flyway** al iniciar la aplicación (`spring.flyway.enabled=true`):
 
-El job `fillClientesJob` recorre todos los clientes que tienen teléfono o domicilio nulo y les asigna un valor por defecto.
+| Versión | Archivo Script                  | Descripción                                        |
+|:--------|:--------------------------------|:---------------------------------------------------|
+| `V1`    | `V1__create_clientes_table.sql` | Creación DDL de la tabla `clientes` en PostgreSQL. |
+| `V2`    | `V2__seed_clientes.sql`         | Seed DML inicial con 92 registros de clientes.     |
 
-| Campo | Valor por defecto |
-|-------|-------------------|
-| `telefono` | `0000-0000` |
-| `direccion` | `Sin domicilio` |
+---
 
-El job no se ejecuta automáticamente al iniciar la aplicación (`spring.batch.job.enabled=false`).
+## ⚙️ Procesos Loteados (Spring Batch - Guía Nro. 2)
 
-## Cómo correr el proyecto
+El proyecto cuenta con tres Jobs configurados para procesamiento masivo:
 
-```bash
-./gradlew bootRun
-```
+### 1. `fillClientesJob` (Unidad 3)
+Actualiza en la BD aquellos clientes con campos nulos, asignando `"0000-0000"` a `telefono` y `"Sin domicilio"` a `direccion`.
 
-## Documentación API
+### 2. `importClienteCsvJob` (Guía 2 - Ejercicio 1)
+- **Fuente**: `src/main/resources/clientes.csv` (200 filas).
+- **Componentes**: `FlatFileItemReader` $\rightarrow$ `ClienteCsvItemProcessor` $\rightarrow$ `JpaItemWriter`.
+- **Lógica de Negocio**: Verifica duplicados en PostgreSQL por email (`ClienteRepositorio.existsByEmail`). Si existe, loguea la causa y retorna `null` descartando la fila.
+- **Transaccionalidad**: Procesamiento en bloques (*chunks*) de a 10 ítems.
 
-Con la aplicación corriendo, accedé a la UI de Swagger en:
+### 3. `exportClienteCsvJob` (Guía 2 - Ejercicio 2 & Requerimiento Extra)
+- **Fuente / Destino**: PostgreSQL (`clientesdb`) $\rightarrow$ `clientes_exportados.csv`.
+- **Componentes**: `RepositoryItemReader` $\rightarrow$ `ClienteExportItemProcessor` $\rightarrow$ `FlatFileItemWriter`.
+- **Lógica de Negocio**: Exige un `Sort` explícito por `id` para lecturas determinísticas. Filtra aquellos clientes sin dirección cargada (retornando `null` e incrementando el `filterCount`).
+- **Métricas**: Loguea en el listener el total de leídos, exportados y excluidos por falta de domicilio.
 
-```
-http://localhost:8080/swagger-ui.html
-```
+---
 
-## Base de datos con Docker
+## 🐳 Entorno Local con Docker
 
-Levantá un contenedor de PostgreSQL con las credenciales que usa la aplicación:
+Levanta el contenedor de PostgreSQL expuesto en el puerto `5432`:
 
 ```bash
 docker run --name clientes-db \
@@ -85,10 +93,15 @@ docker run --name clientes-db \
   -d postgres:16
 ```
 
-| Parámetro | Valor |
-|-----------|-------|
-| Host | `localhost` |
-| Puerto | `5432` |
-| Base de datos | `clientesdb` |
-| Usuario | `postgres` |
-| Contraseña | `postgres` |
+---
+
+## 💻 Cómo Ejecutar el Proyecto
+
+1. Iniciar el contenedor de PostgreSQL: `docker start clientes-db`
+2. Ejecutar la aplicación con el wrapper de Gradle:
+
+```bash
+./gradlew bootRun
+```
+
+3. **Swagger UI**: Accede a la documentación interactiva en [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html).
