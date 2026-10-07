@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
  * inmediatamente despues de que el ApplicationContext se haya cargado completamente.
  */
 @Slf4j
-@Component
+//@Component
 @RequiredArgsConstructor
 public class ClienteCsvJobRunner implements CommandLineRunner {
 
