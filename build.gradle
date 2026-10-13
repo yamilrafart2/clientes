@@ -84,16 +84,26 @@ dependencies {
 
     // MockServer: Permite simular APIs HTTP externas durante las pruebas unitarias y de integración.
     testImplementation 'org.mock-server:mockserver-netty:5.15.0'
+
+    // Lanzador oficial de la plataforma JUnit 5 requerido por Gradle 8+ para ejecutar tests
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 // =============================================================================
 // 5. TAREAS Y AUTOMATIZACIÓN DE PRUEBAS Y COBERTURA (Unidad 4)
 // =============================================================================
-
-// Configura la ejecución de tests unitarios e integrales con JUnit 5.
 test {
-    useJUnitPlatform()
-    finalizedBy jacocoTestReport // Al terminar los tests, genera automáticamente el reporte de cobertura.
+    useJUnitPlatform() // Habilita el soporte para la plataforma JUnit 5
+
+    // CONFIGURACIÓN DE VISIBILIDAD EN CONSOLA:
+    // Fuerza a Gradle a imprimir en la terminal todo lo emitido por System.out / System.err
+    // y detalla el resultado de cada test individualmente (passed, failed, skipped).
+    testLogging {
+        events "passed", "skipped", "failed" // Eventos a registrar
+        showStandardStreams = true           // Habilita la captura de System.out.println
+    }
+
+    finalizedBy jacocoTestReport // Al terminar los tests, genera el reporte de JaCoCo
 }
 
 // Genera el reporte visual en HTML y XML sobre el porcentaje de código testeado.
