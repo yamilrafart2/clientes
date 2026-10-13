@@ -87,6 +87,14 @@ dependencies {
 
     // Lanzador oficial de la plataforma JUnit 5 requerido por Gradle 8+ para ejecutar tests
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // --- Validadores de Negocio y Utilidades Apache Commons (Unidad 4) ---
+    // Provee EmailValidator para validacion robusta de formatos de correo electronico
+    implementation 'commons-validator:commons-validator:1.8.0'
+
+    // --- Utilidades de Manipulación de Cadenas (Apache Commons) ---
+    // Incluye StringUtils.isNotBlank() para validaciones expresivas de negocio
+    implementation 'org.apache.commons:commons-lang3:3.14.0'
 }
 
 // =============================================================================
