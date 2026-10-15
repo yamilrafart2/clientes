@@ -1,6 +1,7 @@
 package com.fube.clientes.servicios;
 
 import com.fube.clientes.dto.ClienteDTO;
+import com.fube.clientes.excepciones.RecursoNoEncontradoException;
 import com.fube.clientes.mapper.ClienteMapper;
 import com.fube.clientes.modelos.Cliente;
 import com.fube.clientes.repositorio.ClienteRepositorio;
@@ -8,53 +9,51 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-// =============================================================================
-// ANOTACIÓN @Service Y BEAN MANAGEMENT [Unidad 1]
-// Indica a Spring IoC Container que esta clase contiene la lógica de negocio
-// y debe registrarse como un Bean administrado en el contexto de la aplicación.
-// =============================================================================
+/**
+ * =============================================================================
+ * CAPA DE SERVICIO: ClienteServicioImpl [Unidad 1 & 4]
+ * =============================================================================
+ *
+ * CONTEXTO DE ARQUITECTURA:
+ * Contiene la implementación de la lógica de negocio del módulo de Clientes.
+ * Registrada como Spring Bean en el contenedor IoC mediante @Service.
+ * Coordina las conversiones DTO <-> Entity a través de ClienteMapper y la
+ * persistencia de datos mediante ClienteRepositorio.
+ */
 @Service
 public class ClienteServicioImpl implements ClienteServicio {
 
-    // -------------------------------------------------------------------------
-    // INYECCIÓN DE DEPENDENCIAS POR CONSTRUCTOR (Clean Code & Best Practice)
-    // Se declara 'final' para garantizar la inmutabilidad de la dependencia.
-    // Nota: Aunque no lleve @Autowired explícito, Spring 4.3+ inyecta
-    // automáticamente cuando hay un único constructor.
-    // -------------------------------------------------------------------------
+    // Inyección de dependencias por constructor (Best Practice - Thread safe & immutable)
     private final ClienteRepositorio repositorio;
 
     public ClienteServicioImpl(ClienteRepositorio repositorio) {
         this.repositorio = repositorio;
     }
 
-    // =========================================================================
-    // CREAR CLIENTE
-    // Persiste la entidad en Postgres y mapea el resultado a DTO.
-    // =========================================================================
+    /**
+     * Convierte el DTO recibido, lo persiste en PostgreSQL y retorna el DTO guardado con su ID.
+     */
     @Override
-    public ClienteDTO crear(Cliente cliente) {
-        return ClienteMapper.toDTO(repositorio.save(cliente));
+    public ClienteDTO crear(ClienteDTO dto) {
+        Cliente clienteANoPersistido = ClienteMapper.toEntity(dto);
+        Cliente clienteGuardado = repositorio.save(clienteANoPersistido);
+        return ClienteMapper.toDTO(clienteGuardado);
     }
 
-    // =========================================================================
-    // BUSCAR POR ID (Manejo de Excepciones y Functional Programming)
-    // findById retorna un Optional<Cliente>.
-    // Se utiliza .map() para transformar la entidad si existe, o orElseThrow()
-    // para lanzar una excepción si el registro no fue encontrado.
-    // =========================================================================
+    /**
+     * Busca un cliente por su ID. Si no existe, lanza la excepción de dominio 'RecursoNoEncontradoException'.
+     */
     @Override
     public ClienteDTO buscarPorId(Long id) {
-        return repositorio.findById(id)
-                .map(ClienteMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado con id: " + id));
+        Cliente cliente = repositorio.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado con ID: " + id));
+        return ClienteMapper.toDTO(cliente);
     }
 
-    // =========================================================================
-    // BUSCAR TODOS
-    // Consulta la BD, convierte el resultado a un Stream funcional, mapea
-    // cada entidad a DTO y retorna la lista inmutable.
-    // =========================================================================
+    /**
+     * Consulta todas las entidades de la BD, utiliza Streams de Java para transformar cada una a DTO
+     * y retorna la lista inmutable.
+     */
     @Override
     public List<ClienteDTO> buscarTodos() {
         return repositorio.findAll().stream()
@@ -62,21 +61,28 @@ public class ClienteServicioImpl implements ClienteServicio {
                 .toList();
     }
 
-    // =========================================================================
-    // ACTUALIZAR CLIENTE
-    // Reutiliza save(), el cual en JPA realiza un 'merge' si el ID ya existe en la BD.
-    // =========================================================================
+    /**
+     * Actualiza la entidad en la BD utilizando el método save() de JPA (Merge).
+     */
     @Override
-    public ClienteDTO actualizar(Cliente cliente) {
-        return ClienteMapper.toDTO(repositorio.save(cliente));
+    public ClienteDTO actualizar(ClienteDTO dto) {
+        // Verificamos previamente la existencia para no crear un recurso nuevo por error
+        if (dto.getId() == null || !repositorio.existsById(dto.getId())) {
+            throw new RecursoNoEncontradoException("No se puede actualizar. Cliente no encontrado con ID: " + dto.getId());
+        }
+        Cliente clienteAActualizar = ClienteMapper.toEntity(dto);
+        Cliente clienteActualizado = repositorio.save(clienteAActualizar);
+        return ClienteMapper.toDTO(clienteActualizado);
     }
 
-    // =========================================================================
-    // ELIMINAR CLIENTE
-    // Elimina la fila correspondiente por su clave primaria.
-    // =========================================================================
+    /**
+     * Elimina el cliente por su ID de la base de datos.
+     */
     @Override
     public void eliminar(Long id) {
+        if (!repositorio.existsById(id)) {
+            throw new RecursoNoEncontradoException("No se puede eliminar. Cliente no encontrado con ID: " + id);
+        }
         repositorio.deleteById(id);
     }
 }

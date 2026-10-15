@@ -1,22 +1,28 @@
 package com.fube.clientes.servicios;
 
 import com.fube.clientes.dto.ClienteDTO;
-import com.fube.clientes.modelos.Cliente;
-
 import java.util.List;
 
-// =============================================================================
-// PATRÓN SERVICE INTERFACE [Unidad 1]
-// Define el contrato de las operaciones de negocio del módulo de Clientes.
-// Permite desacoplar el "qué se hace" (contrato) del "cómo se hace" (implementación),
-// facilitando el principio de Inversión de Dependencias (DIP de SOLID) y el mockeo
-// de dependencias durante las pruebas unitarias con Mockito (Unidad 4).
-// =============================================================================
+/**
+ * =============================================================================
+ * PATRÓN SERVICE INTERFACE [Unidad 1 - SOLID / Dependency Inversion Principle]
+ * =============================================================================
+ *
+ * CONTEXTO DE ARQUITECTURA:
+ * Define el contrato público de operaciones de negocio para el dominio de Clientes.
+ * Aplica el principio de Inversión de Dependencias (DIP): la capa de presentación (Controller)
+ * depende de una abstracción (Interface) y no de una implementación concreta (ServiceImpl).
+ * Esto facilita la sustitución de componentes y permite el uso de Mocks durante las pruebas.
+ */
 public interface ClienteServicio {
 
-    ClienteDTO crear(Cliente cliente);
+    ClienteDTO crear(ClienteDTO dto);
+
     ClienteDTO buscarPorId(Long id);
+
     List<ClienteDTO> buscarTodos();
-    ClienteDTO actualizar(Cliente cliente);
+
+    ClienteDTO actualizar(ClienteDTO dto);
+
     void eliminar(Long id);
 }
