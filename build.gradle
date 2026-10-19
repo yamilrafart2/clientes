@@ -85,16 +85,20 @@ dependencies {
     // MockServer: Permite simular APIs HTTP externas durante las pruebas unitarias y de integración.
     testImplementation 'org.mock-server:mockserver-netty:5.15.0'
 
-    // Lanzador oficial de la plataforma JUnit 5 requerido por Gradle 8+ para ejecutar tests
+    // Lanzador oficial de la plataforma JUnit 5 requerido por Gradle 8+ para ejecutar tests.
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // --- Validadores de Negocio y Utilidades Apache Commons (Unidad 4) ---
-    // Provee EmailValidator para validacion robusta de formatos de correo electronico
+    // Provee EmailValidator para validación robusta de formatos de correo electrónico.
     implementation 'commons-validator:commons-validator:1.8.0'
 
     // --- Utilidades de Manipulación de Cadenas (Apache Commons) ---
-    // Incluye StringUtils.isNotBlank() para validaciones expresivas de negocio
+    // Incluye StringUtils.isNotBlank() para validaciones expresivas de negocio.
     implementation 'org.apache.commons:commons-lang3:3.14.0'
+
+    // --- Base de Datos Embebida para Pruebas de Persistencia (Unidad 4) ---
+    // Provee la base de datos H2 en memoria con alcance exclusivo para el classpath de testing.
+    testImplementation 'com.h2database:h2'
 }
 
 // =============================================================================
