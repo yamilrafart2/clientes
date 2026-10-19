@@ -164,4 +164,29 @@ class ClienteControladorTest {
                 .andExpect(jsonPath("$.error", is("Not Found")))
                 .andExpect(jsonPath("$.mensaje").exists());
     }
+
+    // =========================================================================
+    // EJERCICIO EXTRA (JACOCO): DELETE /api/v1/clientes/{id} - Borrado Exitoso
+    // =========================================================================
+    @Test
+    @DisplayName("JaCoCo Extra: DELETE /api/v1/clientes/{id} borra la entidad y retorna HTTP 204 No Content")
+    void deberiaEliminarClienteExitosamente() throws Exception {
+        // GIVEN: Un cliente previamente persistido en la base de datos de test (H2)
+        Cliente cliente = Cliente.builder()
+                .nombre("Ariel")
+                .apellido("Ortega")
+                .email("burrito@mail.com")
+                .telefono("3424999888")
+                .direccion("Calle 10")
+                .build();
+        Cliente clienteGuardado = clienteRepositorio.save(cliente);
+
+        // WHEN: Se realiza la petición HTTP DELETE
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .delete("/api/v1/clientes/{id}", clienteGuardado.getId()))
+                .andExpect(status().isNoContent()); // HTTP 204
+
+        // THEN: Se valida la eliminación del registro en el repositorio JPA
+        assertEquals(0, clienteRepositorio.count(), "El registro debe ser eliminado de la BD");
+    }
 }
